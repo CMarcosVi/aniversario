@@ -1,0 +1,235 @@
+<!-- surpresa.html (ATUALIZADA COM BOTÃO SECRETO) -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Surpresa 💖</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --pink-dark: #4b0122;
+      --pink-mid:  #d81b60;
+      --pink:      #ff6aa0;
+      --ink:       #2b0b1d;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: radial-gradient(1000px 600px at 20% 10%, #5a052a 0%, var(--pink-dark) 50%, #2a0013 100%);
+      color:#fff;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      display:grid;
+      place-items:center;
+      transition: background 800ms ease;
+      overflow:hidden;
+    }
+    body.done{
+      background: radial-gradient(1200px 700px at 70% 30%, #ffe0ec 0%, #ffd3e6 40%, #fff 100%);
+      color: var(--ink);
+    }
+    #finalImg{
+      object-fit: cover !important;
+      max-height: 350px !important;
+    }
+    .wrap{ width:min(900px, 92vw); display:grid; gap:28px; justify-items:center; }
+
+    /* Coração */
+    .heart{ width:200px; height:auto; cursor:pointer; user-select:none; filter: drop-shadow(0 14px 30px rgba(216,27,96,.18)); }
+
+    /* Barra de progresso do coração */
+    .bar{
+      width:min(520px, 92vw); height:16px; border-radius:999px;
+      background: rgba(255,255,255,.16);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.08);
+      overflow:hidden; position:relative; cursor:pointer;
+    }
+    .bar .fill{ height:100%; width:0%; background: linear-gradient(90deg, #ff4f94, #ffa1c7); box-shadow: 0 6px 18px rgba(255,105,150,.25); transition: width 140ms ease; }
+    .bar .label{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:.9rem; font-weight:700; color:rgba(255,255,255,.9); text-shadow:0 1px 0 rgba(0,0,0,.15); pointer-events:none; }
+    .bar.complete{ box-shadow: 0 0 18px rgba(255,160,200,.55), 0 0 38px rgba(255,160,200,.35), inset 0 0 0 2px rgba(255,255,255,.2); }
+    .bar.complete .fill{ animation: shine 1.2s linear infinite; }
+    @keyframes shine{ 0%{filter:brightness(1)} 50%{filter:brightness(1.25)} 100%{filter:brightness(1)} }
+
+    .hint{ font-size:.92rem; opacity:.8; text-align:center; user-select:none; transition: opacity 400ms ease, transform 400ms ease; }
+
+    /* Área final (imagem + texto) */
+    .reveal{ display:none; text-align:center; }
+    .reveal img{
+      max-width:min(560px,92vw); width:100%; height:auto;
+      border-radius:16px; box-shadow:0 18px 50px rgba(0,0,0,.18);
+      opacity:0; transform:translateY(12px) scale(.96);
+    }
+
+    .text-card{
+      width:min(560px,92vw); background:#fff; color:var(--ink);
+      border-radius:16px; box-shadow:0 18px 50px rgba(0,0,0,.18);
+      text-align:left; overflow:hidden; opacity:0; transform:translateY(12px) scale(.98);
+    }
+
+    .readbar{ height:6px; background: rgba(0,0,0,.06); position:relative; }
+    .readbar .readbar-fill{ position:absolute; left:0; top:0; bottom:0; width:0%; background: linear-gradient(90deg, #ff4f94, #ffa1c7); transition: width 100ms linear; }
+
+    .text-content{
+      padding:18px 20px 20px; max-height: clamp(260px, 44vh, 440px);
+      overflow:auto; line-height:1.6; font-weight:400; font-size:clamp(15px, 1.6vw, 17px);
+    }
+    .text-content p{ margin:0 0 14px 0; opacity:0; transform: translateY(8px); }
+    .text-content p.in{ animation: fadeUp 480ms ease-out forwards; }
+
+    .text-content p.ip{ opacity:0; transform:none; white-space:pre-wrap; font-weight:400; position:relative; }
+    .text-content p.ip.typing{ opacity:1; }
+    .text-content p.ip.typing::after{ content:""; position:absolute; width:2px; top:0; bottom:0; margin-left:2px; background: currentColor; opacity:.7; animation: caretBlink 1s steps(2,end) infinite; }
+    @keyframes caretBlink{ 0%,49%{opacity:.7} 50%,100%{opacity:0} }
+
+    @keyframes popIn{ 0%{opacity:0; transform:translateY(12px) scale(.96)} 60%{opacity:1; transform:translateY(0) scale(1.02)} 100%{opacity:1; transform:translateY(0) scale(1)} }
+    @keyframes fadeUp{ 0%{opacity:0; transform:translateY(8px); letter-spacing:.2px} 100%{opacity:1; transform:translateY(0); letter-spacing:0} }
+    .reveal.animate img       { animation: popIn 650ms cubic-bezier(.22,.8,.2,1) forwards; }
+    .reveal.animate .text-card{ animation: popIn 650ms cubic-bezier(.22,.8,.2,1) 120ms forwards; }
+
+    @media (prefers-reduced-motion: reduce){
+      .reveal img, .text-card { animation:none !important; opacity:1 !important; transform:none !important; }
+      .text-content p{ opacity:1 !important; transform:none !important; animation:none !important; }
+      .bar .fill, .readbar .readbar-fill{ transition:none; }
+      body{ transition:none; }
+    }
+
+    /* >>> BOTÃO SECRETO INVISÍVEL (desktop e mobile) <<< */
+    .secret-hit{
+      position:fixed; top:0; left:0;
+      width:clamp(44px, 10vw, 64px); height:clamp(44px, 10vw, 64px);
+      background: transparent; border:0; padding:0; margin:0;
+      opacity:0; cursor:pointer;
+      z-index: 9999; /* acima de tudo */
+      /* acessível, porém invisível visualmente */
+    }
+  </style>
+</head>
+<body>
+  <button class="secret-hit" aria-label="Abrir página secreta" title=""></button>
+
+  <div class="wrap">
+    <!-- Coração com máscara que enche -->
+    <svg class="heart" id="heart" viewBox="0 0 32 29.6" aria-label="Coração">
+      <defs>
+        <mask id="fillMask" maskUnits="userSpaceOnUse">
+          <rect id="maskRect" x="0" y="29.6" width="32" height="0" fill="#fff"/>
+        </mask>
+        <linearGradient id="pinkGrad" x1="0" x2="0" y1="1" y2="0">
+          <stop offset="0%" stop-color="#ff6aa0"/><stop offset="100%" stop-color="#ff8fb8"/>
+        </linearGradient>
+      </defs>
+      <path fill="#c9b1ba" d="M23.6,0c-2.9,0-5.4,1.7-7.6,5.1C13.8,1.7,11.3,0,8.4,0C3.8,0,0,3.8,0,8.4
+        c0,9.3,12.4,13.7,16,21.2c3.2-7.6,16-12,16-21.2C32,3.8,28.2,0,23.6,0z"/>
+      <path fill="url(#pinkGrad)" mask="url(#fillMask)" d="M23.6,0c-2.9,0-5.4,1.7-7.6,5.1C13.8,1.7,11.3,0,8.4,0C3.8,0,0,3.8,0,8.4
+        c0,9.3,12.4,13.7,16,21.2c3.2-7.6,16-12,16-21.2C32,3.8,28.2,0,23.6,0z"/>
+      <path fill="none" stroke="rgba(0,0,0,.14)" stroke-width=".6"
+        d="M23.6,0c-2.9,0-5.4,1.7-7.6,5.1C13.8,1.7,11.3,0,8.4,0C3.8,0,0,3.8,0,8.4
+        c0,9.3,12.4,13.7,16,21.2c3.2-7.6,16-12,16-21.2C32,3.8,28.2,0,23.6,0z"/>
+    </svg>
+
+    <!-- Barra de progresso -->
+    <div class="bar" id="bar" aria-label="Progresso">
+      <div class="fill" id="fill"></div>
+      <div class="label" id="percent">0%</div>
+    </div>
+
+    <div class="hint" id="hint">Toque no coração (ou na barra) para encher ✨ — se você parar, ele esvazia suavemente…</div>
+
+    <!-- Área final (imagem + texto) -->
+    <div class="reveal" id="reveal">
+      <img id="finalImg" src="/assets/img1.jpg" alt="Nós dois ♥">
+
+      <article class="text-card" id="textCard" aria-label="Mensagem especial">
+        <div class="readbar"><div class="readbar-fill" id="readFill"></div></div>
+          <div class="text-content" id="textContent">
+            <p>Enfim, mais um ano ao teu lado, e eu nunca estive tão feliz por ter passado o meu tempo de vida com você. Não sou tão bom com textos, meu amor; porém, aqui vai um texto não tão especial para alguém realmente especial.</p>
+            <p>Desde aquele momento em que te olhei na sala de reunião, eu sabia. Eu sabia que era com você que eu queria dormir e acordar; eu sabia que era com você que eu queria rir e chorar. Você é a única cujo sorriso quero admirar, a única de quem quero cuidar quando estiver mal, a única da minha vida e para a minha vida.</p>
+            <p>Desde então, fico feliz em poder te chamar de amor da minha vida: uma pessoa carismática, com um sorriso estonteante. Cada centímetro seu me faz pensar que talvez o mundo não seja tão ruim assim; você faz as provações da vida parecerem tão leves quanto podem ser.</p>
+            <p>Você me instiga a ser melhor, não apenas profissionalmente, mas como pessoa, como homem, como irmão, como filho e como namorado (futuro marido). Eu queria ter te conhecido antes; talvez estivéssemos casados e morando juntos em uma grande casa, creio eu.</p>
+            <p>Por mais que eu diga que te amo, sinto que jamais conseguirei dizer o quanto eu te amo e o quanto sou feliz por ter encontrado uma mulher tão linda, inteligente, divertida e com um sorriso tão majestoso.</p>
+            <p>Quando você me pergunta o que eu amo em você, eu não consigo responder: eu amo tudo, e não tem como não amar — o seu sorriso, sua voz, seu rosto, sua boca, seu pé, suas coxas, suas graças; até mesmo quando quer me irritar. Cada parte, cada característica sua me deixa apaixonado e em êxtase.</p>
+            <p>Por favor, continue sendo essa mulher linda, esbelta, feliz, divertida e esforçada. Nunca deixe as dificuldades da vida dizerem que você não é capaz. Você é meu mundo, o meu tudo.</p>
+            <p>Feliz aniversário, meu amor; você é o meu aprendizado de ontem, meu esforço de hoje e minha esperança de amanhã — do seu “Quelo Quelo”. 💗</p>
+          </div>
+      </article>
+    </div>
+  </div>
+
+  <!-- Áudio (caminhos exigidos) -->
+  <audio id="snd1" src="/assets/sound1.mp3" preload="auto" playsinline></audio>
+  <audio id="snd2" src="/assets/sound2.mp3" preload="auto" playsinline></audio>
+
+  <script>
+    /* ====================== BOTÃO SECRETO (invisível) ====================== */
+    document.querySelector('.secret-hit').addEventListener('click', () => {
+      window.location.href = 'secreta.html';
+    });
+
+    /* ====================== PROGRESSO (coração) ====================== */
+    const CLICK_BOOST = 7.5, HOLD_BOOST_PER_SEC = 22, DECAY_PER_SEC = 3.0, TICK_MS = 40;
+    const heart = document.getElementById('heart'); const bar = document.getElementById('bar');
+    const fill = document.getElementById('fill'); const percent = document.getElementById('percent');
+    const reveal = document.getElementById('reveal'); const maskRect = document.getElementById('maskRect');
+    const hint = document.getElementById('hint'); const HEART_H = 29.6;
+    let progress = 0, boosting = false, done = false;
+
+    function setHeartFill(p){ const t = Math.max(0, Math.min(100, p))/100; const h = HEART_H*t, y = HEART_H - h; maskRect.setAttribute('y', y); maskRect.setAttribute('height', h); }
+    function applyVisual(p){ setHeartFill(p); fill.style.width = `${p}%`; percent.textContent = `${Math.round(p)}%`; }
+    function addProgress(d){ if (done) return; progress = Math.max(0, Math.min(100, progress+d)); applyVisual(progress); if (progress>=100) complete(); }
+    let lastTs = performance.now();
+    (function loop(){ const now = performance.now(), dt=(now-lastTs)/1000; lastTs=now; if(!done){ const c=(boosting?HOLD_BOOST_PER_SEC:0)*dt - DECAY_PER_SEC*dt; if(c) addProgress(c);} setTimeout(loop,TICK_MS); })();
+    const startBoost = ()=>{ boosting=true; addProgress(CLICK_BOOST); }; const stopBoost = ()=>{ boosting=false; };
+    ['pointerdown','touchstart','mousedown'].forEach(ev=>{ heart.addEventListener(ev,startBoost); bar.addEventListener(ev,startBoost); });
+    ['pointerup','pointercancel','touchend','mouseup','mouseleave'].forEach(ev=>{ window.addEventListener(ev,stopBoost); });
+
+    /* ====================== ÁUDIO principal (sound1 aos 22s) ====================== */
+    const snd1 = document.getElementById('snd1'); const snd2 = document.getElementById('snd2');
+    const SND1_START_AT = 22; let audioCtx=null, audioUnlocked=false, startedSnd1=false;
+    function fadeTo(a, v, ms){ return new Promise(res=>{ const s=a.volume, t0=performance.now(); const step=now=>{ const k=Math.min(1,(now-t0)/ms); a.volume=s+(v-s)*k; if(k<1) requestAnimationFrame(step); else res(); }; requestAnimationFrame(step); }); }
+    function setStartOffset(a){ const dur=isFinite(a.duration)?a.duration:Infinity; const at=Math.min(SND1_START_AT, isFinite(dur)?Math.max(0,dur-0.05):SND1_START_AT); try{a.currentTime=at;}catch{} if(!isFinite(dur)){ const once=()=>{ a.removeEventListener('loadedmetadata',once); const d=isFinite(a.duration)?a.duration:Infinity; const a2=Math.min(SND1_START_AT, isFinite(d)?Math.max(0,d-0.05):SND1_START_AT); try{a.currentTime=a2;}catch{} }; a.addEventListener('loadedmetadata', once, {once:true}); } }
+    async function tryStartSnd1(){ if(startedSnd1) return true; snd1.loop=true; snd1.volume=0.0; setStartOffset(snd1); try{ await snd1.play(); startedSnd1=true; if(snd1.currentTime<SND1_START_AT-0.2) setStartOffset(snd1); await fadeTo(snd1,0.6,800); return true; }catch{ return false; } }
+    window.addEventListener('DOMContentLoaded', tryStartSnd1);
+    window.addEventListener('load', tryStartSnd1);
+    document.addEventListener('visibilitychange',()=>{ if(!document.hidden) tryStartSnd1(); });
+    function primeAudioContext(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); const o=audioCtx.createOscillator(), g=audioCtx.createGain(); g.gain.value=0; o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.01);}catch{} }
+    async function unlockAndStart(){ if(audioUnlocked) return; audioUnlocked=true; primeAudioContext(); await tryStartSnd1(); }
+    ['pointerdown','touchstart','mousedown','keydown','wheel'].forEach(ev=>{ window.addEventListener(ev, unlockAndStart, {passive:true}); });
+
+    /* parar sound1 e iniciar sound2 ao REVEAL aparecer */
+    function stopSnd1StartSnd2Now(){
+      try{ snd1.pause(); }catch{} try{ snd1.currentTime=SND1_START_AT; }catch{}
+      try{ snd2.currentTime=0; snd2.volume=0.9; snd2.play().catch(()=>{});}catch{}
+    }
+
+    /* ====================== Finalização (100%) ====================== */
+    async function complete(){
+      if (done) return; done = true;
+      bar.classList.add('complete'); document.body.classList.add('done');
+      [heart,bar,hint].forEach(el=>{ if(!el) return; el.style.transition='opacity 400ms ease, transform 400ms ease'; el.style.opacity='0';
+        if(el===heart) el.style.transform='scale(.96) translateY(-6px)'; if(el===bar) el.style.transform='scale(.98) translateY(6px)'; if(el===hint) el.style.transform='translateY(6px)'; });
+      setTimeout(()=>{ if(heart) heart.style.display='none'; if(bar) bar.style.display='none'; if(hint) hint.style.display='none';
+        reveal.style.display='grid'; void reveal.offsetHeight; reveal.classList.add('animate');
+        stopSnd1StartSnd2Now(); // troca de som no momento do reveal
+        const textCard=document.getElementById('textCard'); const onAnimEnd=()=>{ textCard.removeEventListener('animationend', onAnimEnd); startTypingIP(); };
+        textCard.addEventListener('animationend', onAnimEnd, {once:true});
+      },420);
+    }
+
+    applyVisual(progress);
+
+    /* ====================== Leitura (texto) ====================== */
+    const textCard=document.getElementById('textCard'); const textContent=document.getElementById('textContent'); const readFill=document.getElementById('readFill');
+    function updateReadBar(){ const max=textContent.scrollHeight - textContent.clientHeight; const t=max>0?(textContent.scrollTop/max):1; readFill.style.width=`${Math.round(t*100)}%`; }
+    textContent.addEventListener('scroll', updateReadBar, {passive:true}); window.addEventListener('resize', updateReadBar);
+    const io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); }); }, {root:textContent,threshold:0.1});
+    [...textContent.querySelectorAll('p:not(.ip)')].forEach(p=>io.observe(p));
+    const mo=new MutationObserver(()=>{ if(getComputedStyle(reveal).display!=='none'){ updateReadBar(); mo.disconnect(); }});
+    mo.observe(reveal, {attributes:true, attributeFilter:['class','style']});
+
+    /* ====================== Typewriter (.ip) ====================== */
+    const ipEl=document.getElementById('ipText'); if(ipEl){ const full=ipEl.textContent; ipEl.textContent=''; ipEl.setAttribute('aria-live','polite'); ipEl.dataset.full=full; }
+    function typewriter(el, text, cps=30){ return new Promise(res=>{ el.classList.add('typing'); let i=0; (function step(){ if(i<=text.length){ el.textContent=text.slice(0,i); textContent.scrollTop=textContent.scrollHeight; updateReadBar(); i++; setTimeout(step, 1000/cps);} else { setTimeout(()=>el.classList.remove('typing'),600); res(); } })(); }); }
+    async function startTypingIP(){ if(!ipEl) return; await typewriter(ipEl, ipEl.dataset.full||'', 30); }
+  </script>
+</body>
+</html>

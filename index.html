@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Feliz Aniversário 💖</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Fonte opcional -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --pink: #ff9ec4;
+      --pink-dark: #d81b60;
+      --bg: #fff1f7;
+      --ink: #3b0a2a;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 20% 10%, #ffe3ef 0%, #fff1f7 45%, #ffffff 100%);
+      color:var(--ink);
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+    }
+
+    .stage{
+      position:relative;
+      width:min(900px, 94vw);
+      height:min(560px, 78vh);
+      border-radius:24px;
+      background:
+        radial-gradient(500px 260px at 80% 20%, #ffd3e6 0%, transparent 60%),
+        radial-gradient(600px 420px at 0% 100%, #ffe6f1 0%, transparent 70%),
+        #fff;
+      box-shadow: 0 20px 50px rgba(216,27,96,.12);
+      overflow:hidden;
+      padding:24px;
+      isolation:isolate;
+    }
+
+    .title{
+      position:absolute; left:24px; top:18px; right:24px;
+      text-align:center; font-weight:700; letter-spacing:.3px;
+      color:#b40f55; opacity:.85; user-select:none; pointer-events:none;
+    }
+
+    .hint{
+      position:absolute; bottom:22px; left:0; right:0; text-align:center;
+      font-size:.95rem; opacity:.7; user-select:none; pointer-events:none;
+    }
+
+    .square{
+      position:absolute;
+      width:50px; height:50px;
+      display:grid; place-items:center;
+      border-radius:10px;
+      color:#fff; font-weight:800; font-size:24px;
+      user-select:none;
+      touch-action:none; /* importante p/ drag em mobile */
+      cursor:grab;
+      box-shadow: 0 8px 20px rgba(216,27,96,.25);
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+
+    #box1{ background:var(--pink); left:12%; top:48%; }
+    #box2{ background:var(--pink-dark); right:12%; top:22%; }
+
+    .cta{
+      position:absolute; inset:0; display:grid; place-items:center;
+      pointer-events:none;
+    }
+    .cta button{
+      display:none;
+      border:0; padding:16px 22px;
+      border-radius:999px;
+      background: linear-gradient(90deg, var(--pink-dark), #ff5aa5 55%, var(--pink));
+      color:#fff; font-weight:800; font-size:clamp(16px, 2.2vw, 22px);
+      letter-spacing:.2px;
+      box-shadow: 0 12px 30px rgba(216,27,96,.28), inset 0 0 0 2px rgba(255,255,255,.2);
+      transform: scale(.92);
+      white-space: nowrap;
+    }
+    .cta button:focus-visible{ outline:3px solid #ffb4d0; outline-offset:4px }
+    .cta button:hover{ filter:brightness(1.02) saturate(1.05) }
+
+    /* Badge “M&M” que aparece no meio */
+    .mm-badge{
+      position:absolute;
+      inset:0;
+      display:flex; align-items:center; justify-content:center;
+      pointer-events:none;
+    }
+    .mm-badge .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 16px;
+      border-radius:999px;
+      background: #6a002e;
+      color:#ffffff;
+      font-weight:900;
+      letter-spacing:.3px;
+      text-transform:uppercase;
+      box-shadow: 0 12px 30px rgba(106,0,46,.25), inset 0 0 0 2px rgba(255,255,255,.15);
+      transform: scale(.85);
+      filter: blur(6px);
+      opacity:0;
+    }
+    .mm-badge .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: #ffb7d5;
+    }
+  </style>
+</head>
+<body>
+  <main class="stage" id="stage">
+    <div class="title">Arraste os dois “M” para se encontrarem 💞</div>
+
+    <div class="square" id="box1"><span>M</span></div>
+    <div class="square" id="box2"><span>M</span></div>
+
+    <!-- Aparece somente durante o “merge” -->
+    <div class="mm-badge" id="mmBadge" aria-hidden="true">
+      <div class="pill"><span>M</span><span>&</span><span>M</span><span class="dot"></span></div>
+    </div>
+
+    <div class="cta"><button id="loveBtn">Para a mulher mais linda desse mundo</button></div>
+
+    <div class="hint">Dica: puxe e solte — quando um cobrir o outro, eles se juntam e uma surpresa aparece ✨</div>
+  </main>
+
+  <!-- Anime.js (animações) -->
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script>
+    const stage   = document.getElementById('stage');
+    const box1    = document.getElementById('box1');
+    const box2    = document.getElementById('box2');
+    const mmBadge = document.getElementById('mmBadge');
+    const pill    = mmBadge.querySelector('.pill');
+    const loveBtn = document.getElementById('loveBtn');
+
+    // Estado simples de posição
+    [box1, box2].forEach(el => { el.dataset.x = '0'; el.dataset.y = '0'; });
+
+    // Anima entrada
+    anime({
+      targets: [box1, box2],
+      opacity: [{value: 0, duration: 0}, {value: 1, duration: 500, delay: anime.stagger(100)}],
+      translateY: [-10, 0],
+      scale: [.9, 1],
+      easing: 'easeOutCubic',
+      duration: 600
+    });
+
+    // Drag nativo (JS) com translate
+    function makeDraggable(el, {onStart, onEnd}={}){
+      let startX=0, startY=0, baseX=0, baseY=0, dragging=false;
+
+      const down = e => {
+        dragging = true;
+        el.style.cursor = 'grabbing';
+        const p = getPoint(e);
+        startX = p.x; startY = p.y;
+        baseX = +el.dataset.x; baseY = +el.dataset.y;
+        onStart && onStart();
+        window.addEventListener('pointermove', move);
+        window.addEventListener('pointerup', up, {once:true});
+      };
+
+      const move = e => {
+        if(!dragging) return;
+        const p = getPoint(e);
+        const nx = baseX + (p.x - startX);
+        const ny = baseY + (p.y - startY);
+        el.dataset.x = nx;
+        el.dataset.y = ny;
+        el.style.transform = `translate3d(${nx}px, ${ny}px, 0)`;
+      };
+
+      const up = () => {
+        dragging = false;
+        el.style.cursor = 'grab';
+        window.removeEventListener('pointermove', move);
+        onEnd && onEnd();
+      };
+
+      el.addEventListener('pointerdown', down);
+    }
+
+    function getPoint(e){
+      return { x: e.clientX ?? e.touches?.[0]?.clientX, y: e.clientY ?? e.touches?.[0]?.clientY };
+    }
+
+    function overlapRatio(a, b){
+      const r1 = a.getBoundingClientRect();
+      const r2 = b.getBoundingClientRect();
+      const ix = Math.max(0, Math.min(r1.right, r2.right) - Math.max(r1.left, r2.left));
+      const iy = Math.max(0, Math.min(r1.bottom, r2.bottom) - Math.max(r1.top, r2.top));
+      const intersection = ix * iy;
+      const smaller = Math.min(r1.width*r1.height, r2.width*r2.height);
+      return smaller === 0 ? 0 : intersection / smaller;
+    }
+
+    function centerOf(el){
+      const r = el.getBoundingClientRect();
+      return { cx: r.left + r.width/2, cy: r.top + r.height/2 };
+    }
+
+    let done = false;
+
+    makeDraggable(box1, { onEnd: tryMerge });
+    makeDraggable(box2, { onEnd: tryMerge });
+
+    function tryMerge(){
+      if (done) return;
+      if (overlapRatio(box1, box2) >= 0.6){
+        done = true;
+        mergeAndReveal();
+      }
+    }
+
+    async function mergeAndReveal(){
+      // Calcula ponto de encontro (meio entre os centros atuais)
+      const c1 = centerOf(box1);
+      const c2 = centerOf(box2);
+      const target = { cx: (c1.cx + c2.cx)/2, cy: (c1.cy + c2.cy)/2 };
+
+      // Move cada quadrado até o target (ajustando seus translateX/Y)
+      // Calcula novos translate relativos ao centro atual
+      const r1 = box1.getBoundingClientRect();
+      const r2 = box2.getBoundingClientRect();
+      const cur1 = { x: +box1.dataset.x, y: +box1.dataset.y };
+      const cur2 = { x: +box2.dataset.x, y: +box2.dataset.y };
+
+      const dx1 = target.cx - (r1.left + r1.width/2);
+      const dy1 = target.cy - (r1.top  + r1.height/2);
+      const dx2 = target.cx - (r2.left + r2.width/2);
+      const dy2 = target.cy - (r2.top  + r2.height/2);
+
+      // Linha do tempo de "atração" + "colisão suave"
+      const t = anime.timeline({ easing: 'easeOutCubic' });
+
+      t.add({
+        targets: box1,
+        translateX: cur1.x + dx1,
+        translateY: cur1.y + dy1,
+        rotate: [-6, 0],
+        scale: [1, 1.12],
+        duration: 380
+      }, 0);
+
+      t.add({
+        targets: box2,
+        translateX: cur2.x + dx2,
+        translateY: cur2.y + dy2,
+        rotate: [7, 0],
+        scale: [1, 1.12],
+        duration: 380
+      }, 0);
+
+      // Pequeno "squash" no encontro
+      t.add({
+        targets: [box1, box2],
+        scale: [{value: 1.12, duration: 0}, {value: 0.96, duration: 120}, {value: 1.05, duration: 140}],
+        duration: 260,
+        easing: 'easeOutQuad'
+      });
+
+      // Mostra "M&M" no centro (pop) enquanto os quadrados somem
+      t.add({
+        begin: ()=>{
+          pill.style.opacity = 0;
+          pill.style.filter  = 'blur(6px)';
+          mmBadge.style.pointerEvents = 'none';
+        },
+        complete: ()=>{
+          // nada
+        }
+      });
+
+      // Pop do M&M
+      t.add({
+        targets: pill,
+        opacity: [0, 1],
+        filter: ['blur(6px)', 'blur(0px)'],
+        scale: [.85, 1],
+        duration: 320,
+        easing: 'easeOutBack'
+      });
+
+      // Esconde os quadrados com fade/encolhendo
+      t.add({
+        targets: [box1, box2],
+        opacity: [1, 0],
+        scale: [1.05, .85],
+        duration: 260,
+        easing: 'easeOutQuad',
+        complete: ()=>{
+          box1.style.display = 'none';
+          box2.style.display = 'none';
+        }
+      }, '-=200');
+
+      // Mantém o M&M por um instante e então some
+      t.add({
+        targets: pill,
+        delay: 300,
+        opacity: [1, 0],
+        scale: [1, .9],
+        duration: 260,
+        easing: 'easeInQuad',
+        complete: ()=>{
+          mmBadge.style.display = 'none';
+        }
+      });
+
+      // Por fim, revela o botão com um "pop" fofo
+      t.add({
+        begin: ()=>{
+          loveBtn.style.display = 'inline-block';
+          loveBtn.parentElement.style.pointerEvents = 'auto';
+        },
+        targets: loveBtn,
+        opacity: [{value: 0, duration: 0}, {value: 1, duration: 450}],
+        translateY: [10, 0],
+        scale: [.9, 1],
+        filter: ['blur(3px)','blur(0)'],
+        duration: 450,
+        easing: 'easeOutCubic'
+      });
+    }
+
+    // micro interação no clique do botão
+    loveBtn.addEventListener('click', () => {
+      anime({
+        targets: loveBtn,
+        scale: [1, 1.04, 1],
+        duration: 160,
+        easing: 'easeOutQuad'
+      });
+      // aqui você pode abrir outra seção, tocar música, etc.
+    });
+        loveBtn.addEventListener('click', () => {
+      window.location.href = '/coracao'
+    })
+  </script>
+</body>
+</html>
